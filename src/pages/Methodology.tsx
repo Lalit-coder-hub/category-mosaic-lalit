@@ -12,10 +12,30 @@ export default function Methodology() {
         </p>
         <div className="mt-4 space-y-3">
           <Factor name="Growth Velocity" weight="35%" description="Three-month search volume trajectory. Measures the rate of consumer interest acceleration. Higher weight reflects the primacy of demand-side signals in early category formation." />
-          <Factor name="Cross-Platform Social Validation" weight="25%" description="Aggregate of Reddit community mentions and YouTube content creation. Validates whether search interest is accompanied by organic community discussion and content creation — a leading indicator of sustained relevance." />
+          <Factor name="Cross-Platform Social Validation" weight="25%" description="Aggregate of Reddit community mentions, YouTube content creation, and Instagram discussions. Validates whether search interest is accompanied by organic community discussion and content creation — a leading indicator of sustained relevance. Now incorporates sentiment analysis." />
           <Factor name="Commercial Intent Proxy" weight="20%" description="Amazon search index as a proxy for purchase-intent behavior. Distinguishes between awareness-stage curiosity and conversion-ready demand." />
           <Factor name="Signal Consistency & Momentum" weight="20%" description="Month-over-month growth consistency. Penalizes volatile spikes and rewards steady directional momentum. Designed to filter out short-term viral artifacts from genuine emerging trends." />
         </div>
+      </Section>
+
+      <Section title="Sentiment-Adjusted Social Scoring">
+        <p>
+          Social signal scores now incorporate sentiment analysis across Reddit, YouTube, and Instagram discussions.
+          The system evaluates the distribution of positive, neutral, and negative sentiment for each platform.
+        </p>
+        <p className="mt-2">
+          <strong>Sentiment penalty logic:</strong> If the average negative sentiment across platforms exceeds 40%,
+          a penalty of up to 15 points is applied to the social signal weighted score. This adjustment ensures that
+          high discussion volume driven primarily by negative perception (complaints, adverse reactions, controversy)
+          does not inflate the opportunity score.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground font-mono">
+          penalty = min(15, (avg_negative% - 40) × 0.5) — applied only when avg_negative &gt; 40%
+        </p>
+        <p className="mt-2">
+          This distinction helps separate genuine consumer enthusiasm from viral negativity, providing a more
+          accurate assessment of market receptivity.
+        </p>
       </Section>
 
       <Section title="Normalization">
@@ -38,6 +58,19 @@ export default function Methodology() {
         </div>
       </Section>
 
+      <Section title="Keyword Discovery Mode">
+        <p>
+          When a keyword is entered via the Trend Discovery search, the system generates a simulated signal profile
+          using predefined realistic ranges for search growth, social mentions (Reddit, YouTube, Instagram),
+          commercial signals (Amazon), and sentiment distributions. The simulated data is processed through the
+          same weighted scoring model, ensuring consistency between discovered and uploaded trends.
+        </p>
+        <p className="mt-2">
+          Simulated profiles are clearly labeled and should be treated as directional indicators rather than
+          validated market intelligence.
+        </p>
+      </Section>
+
       <Section title="Spike vs. Sustained Trend Detection">
         <p>
           The Signal Consistency factor specifically addresses the challenge of distinguishing
@@ -53,6 +86,7 @@ export default function Methodology() {
           <li className="flex gap-2"><span className="text-primary">·</span>Scores are relative to the uploaded dataset. Adding or removing trends will shift all normalized values.</li>
           <li className="flex gap-2"><span className="text-primary">·</span>The model does not incorporate qualitative factors such as regulatory barriers, brand equity, or supply chain complexity.</li>
           <li className="flex gap-2"><span className="text-primary">·</span>Three-month trailing data provides a limited window. Longer time series would improve confidence.</li>
+          <li className="flex gap-2"><span className="text-primary">·</span>Sentiment analysis uses simulated distributions for keyword discovery mode and should be validated with live data.</li>
         </ul>
       </Section>
     </div>

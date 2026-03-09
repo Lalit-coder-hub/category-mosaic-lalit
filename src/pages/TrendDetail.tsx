@@ -1,8 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/context/DataContext';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, TrendingUp, MessageSquare, Youtube, Instagram, ShoppingCart, DollarSign, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TierBadge } from '@/components/TierBadge';
+import { SentimentChart } from '@/components/SentimentChart';
+import { MomentumChart } from '@/components/MomentumChart';
 
 export default function TrendDetail() {
   const { id } = useParams<{ id: string }>();
@@ -29,16 +31,14 @@ export default function TrendDetail() {
     { label: 'Signal Consistency', weight: '20%', ...scores.signalConsistency },
   ];
 
-  // Generate executive summary
   const growthSpeed = trend.growthPct > 80 ? 'rapidly accelerating' : trend.growthPct > 40 ? 'steadily growing' : 'gradually emerging';
   const stage = trend.tier === 1 ? 'reached critical mass and represents an immediate build signal'
     : trend.tier === 2 ? 'showing strong momentum with emerging commercial validation'
     : trend.tier === 3 ? 'still in early signal phase and warrants continued monitoring'
     : 'not yet demonstrating sufficient signal strength for prioritization';
 
-  const executiveSummary = `${trend.keyword} is ${growthSpeed} within the Indian wellness market, with search volume increasing ${trend.growthPct}% over the trailing three-month period. Cross-platform signal validation shows ${trend.reddit_mentions} Reddit mentions and an Amazon search index of ${trend.amazon_search}, indicating ${trend.competitionIntensity.toLowerCase()} commercial competition density. The trend has ${stage}. ${trend.tier <= 2 ? 'Given the convergence of consumer demand signals and manageable competition, this represents a strategically interesting category entry point.' : 'Further signal accumulation is recommended before committing significant resources.'}`;
+  const executiveSummary = `${trend.keyword} is ${growthSpeed} within the Indian wellness market, with search volume increasing ${trend.growthPct}% over the trailing three-month period. Cross-platform signal validation shows ${trend.reddit_mentions} Reddit mentions, ${trend.youtube_mentions || 0} YouTube mentions, and ${trend.instagram_mentions || 0} Instagram discussions, indicating ${trend.competitionIntensity.toLowerCase()} commercial competition density. The trend has ${stage}. ${trend.tier <= 2 ? 'Given the convergence of consumer demand signals and manageable competition, this represents a strategically interesting category entry point.' : 'Further signal accumulation is recommended before committing significant resources.'}`;
 
-  // Strategic recommendations based on data
   const skuFormat = trend.category === 'Functional Beverages' ? 'Ready-to-mix sachets / Instant powder'
     : trend.category === 'Sports Nutrition' ? 'Single-serve pouches / Tubs (500g–1kg)'
     : trend.category === 'Beauty & Skin' ? 'Capsules / Powder sachets'
@@ -50,12 +50,20 @@ export default function TrendDetail() {
 
   const firstMoverWindow = trend.tier === 1 ? '3–6' : trend.tier === 2 ? '6–12' : '12–18';
 
+  const hasSentiment = trend.reddit_sentiment || trend.youtube_sentiment || trend.instagram_sentiment;
+
   return (
     <div className="p-6 lg:p-8 max-w-[1000px]">
       {/* Header */}
       <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="mb-4 text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
       </Button>
+
+      {trend.isSimulated && (
+        <div className="bg-primary/10 border border-primary/20 rounded-md px-4 py-2 mb-4 text-xs text-primary">
+          Signal profile generated from public trend indicators.
+        </div>
+      )}
 
       <div className="flex items-start justify-between mb-8">
         <div>
@@ -71,6 +79,11 @@ export default function TrendDetail() {
       {/* Executive Summary */}
       <Section title="Executive Summary">
         <p className="text-sm text-secondary-foreground leading-relaxed">{executiveSummary}</p>
+      </Section>
+
+      {/* Search Momentum */}
+      <Section title="Search Momentum">
+        <MomentumChart trend={trend} />
       </Section>
 
       {/* Score Breakdown */}
@@ -113,20 +126,33 @@ export default function TrendDetail() {
         </div>
         <p className="text-[11px] text-muted-foreground mt-2">
           Formula: (Search Growth × 0.35) + (Social Signals × 0.25) + (Commercial Intent × 0.20) + (Signal Consistency × 0.20)
+          {trend.sentimentPenalty > 0 && ` — Sentiment penalty applied: -${trend.sentimentPenalty} on social signal score.`}
         </p>
       </Section>
 
       {/* Signal Evidence */}
       <Section title="Signal Evidence">
-        <ul className="space-y-2 text-sm text-secondary-foreground">
-          <Li>Google Trends search growth: <strong>+{trend.growthPct}%</strong> over 3 months</Li>
-          <Li>Reddit community mentions: <strong>{trend.reddit_mentions}</strong></Li>
-          <Li>YouTube content mentions: <strong>{trend.youtube_mentions || 'N/A'}</strong></Li>
-          <Li>Amazon search index: <strong>{trend.amazon_search}</strong></Li>
-          <Li>Amazon product count: <strong>{trend.amazon_product_count || 'N/A'}</strong></Li>
-          <Li>Average price band: <strong>{trend.avg_price_band || 'N/A'}</strong></Li>
+        <ul className="space-y-2.5 text-sm text-secondary-foreground">
+          <SignalItem icon={Search} label="Google Trends search growth" value={`+${trend.growthPct}% over 3 months`} />
+          <SignalItem icon={MessageSquare} label="Reddit discussion volume" value={`${trend.reddit_mentions} mentions`} />
+          <SignalItem icon={Youtube} label="YouTube content mentions" value={`${trend.youtube_mentions || 'N/A'}`} />
+          <SignalItem icon={Instagram} label="Instagram discussion volume" value={`${trend.instagram_mentions || 'N/A'}`} />
+          <SignalItem icon={ShoppingCart} label="Amazon product count" value={`${trend.amazon_product_count || 'N/A'}`} />
+          <SignalItem icon={DollarSign} label="Average price band" value={trend.avg_price_band || 'N/A'} />
         </ul>
       </Section>
+
+      {/* Social Sentiment Analysis */}
+      {hasSentiment && (
+        <Section title="Social Sentiment Analysis">
+          <p className="text-[11px] text-muted-foreground mb-4">
+            Community sentiment distribution across social discussions.
+          </p>
+          {trend.reddit_sentiment && <SentimentChart label="Reddit" sentiment={trend.reddit_sentiment} />}
+          {trend.youtube_sentiment && <SentimentChart label="YouTube" sentiment={trend.youtube_sentiment} />}
+          {trend.instagram_sentiment && <SentimentChart label="Instagram" sentiment={trend.instagram_sentiment} />}
+        </Section>
+      )}
 
       {/* White Space Analysis */}
       <Section title="White Space Analysis">
@@ -163,10 +189,10 @@ export default function TrendDetail() {
       {/* Risk Considerations */}
       <Section title="Risk Considerations">
         <ul className="space-y-2 text-sm text-secondary-foreground">
-          <Li><strong>Fad Risk:</strong> {trend.growthPct > 100 ? 'Elevated — rapid growth may indicate viral spike rather than sustained demand. Monitor for deceleration.' : 'Moderate — growth trajectory is consistent with organic demand building.'}</Li>
-          <Li><strong>Supply Chain:</strong> {trend.category === 'Superfoods' ? 'Higher risk — raw material sourcing may face import dependency and price volatility.' : 'Standard risk — domestic supply chain infrastructure is adequate.'}</Li>
-          <Li><strong>Regulatory:</strong> FSSAI compliance required. No extraordinary regulatory hurdles anticipated for this category.</Li>
-          <Li><strong>Overcrowding:</strong> {trend.competitionIntensity === 'High' ? 'High risk — market may reach saturation before meaningful differentiation is achieved.' : 'Low to moderate — current competitive density allows for differentiated entry.'}</Li>
+          <li className="flex gap-2"><span className="text-primary mt-1">·</span><span><strong>Fad Risk:</strong> {trend.growthPct > 100 ? 'Elevated — rapid growth may indicate viral spike rather than sustained demand. Monitor for deceleration.' : 'Moderate — growth trajectory is consistent with organic demand building.'}</span></li>
+          <li className="flex gap-2"><span className="text-primary mt-1">·</span><span><strong>Supply Chain:</strong> {trend.category === 'Superfoods' ? 'Higher risk — raw material sourcing may face import dependency and price volatility.' : 'Standard risk — domestic supply chain infrastructure is adequate.'}</span></li>
+          <li className="flex gap-2"><span className="text-primary mt-1">·</span><span><strong>Regulatory:</strong> FSSAI compliance required. No extraordinary regulatory hurdles anticipated for this category.</span></li>
+          <li className="flex gap-2"><span className="text-primary mt-1">·</span><span><strong>Overcrowding:</strong> {trend.competitionIntensity === 'High' ? 'High risk — market may reach saturation before meaningful differentiation is achieved.' : 'Low to moderate — current competitive density allows for differentiated entry.'}</span></li>
         </ul>
       </Section>
     </div>
@@ -191,8 +217,13 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
   );
 }
 
-function Li({ children }: { children: React.ReactNode }) {
-  return <li className="flex gap-2"><span className="text-primary mt-1">·</span><span>{children}</span></li>;
+function SignalItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <li className="flex items-center gap-3">
+      <Icon className="h-4 w-4 text-primary shrink-0" />
+      <span>{label}: <strong>{value}</strong></span>
+    </li>
+  );
 }
 
 function RecItem({ label, value }: { label: string; value: string }) {

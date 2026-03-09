@@ -6,6 +6,7 @@ import { Upload, TrendingUp, Target, BarChart3, Zap } from 'lucide-react';
 import { TierBadge } from '@/components/TierBadge';
 import { ScoreBar } from '@/components/ScoreBar';
 import { CSVUploadModal } from '@/components/CSVUploadModal';
+import { TrendDiscovery } from '@/components/TrendDiscovery';
 
 export default function Dashboard() {
   const { trends } = useData();
@@ -38,6 +39,9 @@ export default function Dashboard() {
           Upload CSV
         </Button>
       </div>
+
+      {/* Trend Discovery */}
+      <TrendDiscovery />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
