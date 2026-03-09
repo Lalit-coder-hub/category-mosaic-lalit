@@ -1,3 +1,9 @@
+export interface SentimentBreakdown {
+  positive: number;
+  neutral: number;
+  negative: number;
+}
+
 export interface TrendRawData {
   keyword: string;
   month1: number;
@@ -5,11 +11,22 @@ export interface TrendRawData {
   month3: number;
   reddit_mentions: number;
   amazon_search: number;
-  // Extended fields for detail view (can be derived or default)
+  // Extended fields
   youtube_mentions?: number;
+  instagram_mentions?: number;
   amazon_product_count?: number;
   avg_price_band?: string;
   category?: string;
+  // Sentiment data
+  reddit_sentiment?: SentimentBreakdown;
+  youtube_sentiment?: SentimentBreakdown;
+  instagram_sentiment?: SentimentBreakdown;
+  // Extra months for momentum chart
+  month4?: number;
+  month5?: number;
+  month6?: number;
+  // Flag for simulated data
+  isSimulated?: boolean;
 }
 
 export interface TrendScored extends TrendRawData {
@@ -21,6 +38,7 @@ export interface TrendScored extends TrendRawData {
   growthPct: number;
   competitionIntensity: string;
   timeToMainstream: number;
+  sentimentPenalty: number;
   scores: {
     searchGrowth: { raw: number; normalized: number; weighted: number };
     socialSignals: { raw: number; normalized: number; weighted: number };

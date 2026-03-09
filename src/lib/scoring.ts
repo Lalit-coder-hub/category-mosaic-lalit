@@ -31,16 +31,23 @@ function getTimeToMainstream(growthPct: number, score: number): number {
   return Math.round(24 + Math.random() * 12);
 }
 
+/** Calculate sentiment penalty: if avg negative > 40%, apply up to 15% reduction on social score */
+function calcSentimentPenalty(d: TrendRawData): number {
+  const sentiments = [d.reddit_sentiment, d.youtube_sentiment, d.instagram_sentiment].filter(Boolean);
+  if (sentiments.length === 0) return 0;
+  const avgNegative = sentiments.reduce((sum, s) => sum + s!.negative, 0) / sentiments.length;
+  if (avgNegative > 40) return Math.min(15, Math.round((avgNegative - 40) * 0.5));
+  return 0;
+}
+
 export function scoreTrends(rawData: TrendRawData[]): TrendScored[] {
   if (rawData.length === 0) return [];
 
-  // Calculate raw metrics
   const metrics = rawData.map(d => {
     const growthPct = calcGrowthPct(d.month1, d.month3);
     const searchGrowthRaw = growthPct;
-    const socialRaw = d.reddit_mentions + (d.youtube_mentions || 0);
+    const socialRaw = d.reddit_mentions + (d.youtube_mentions || 0) + (d.instagram_mentions || 0);
     const commercialRaw = d.amazon_search;
-    // Signal consistency: how steady is the growth (month-over-month)
     const m1m2Growth = d.month1 === 0 ? (d.month2 > 0 ? 100 : 0) : ((d.month2 - d.month1) / d.month1) * 100;
     const m2m3Growth = d.month2 === 0 ? (d.month3 > 0 ? 100 : 0) : ((d.month3 - d.month2) / d.month2) * 100;
     const consistencyRaw = m1m2Growth > 0 && m2m3Growth > 0
@@ -50,7 +57,6 @@ export function scoreTrends(rawData: TrendRawData[]): TrendScored[] {
     return { searchGrowthRaw, socialRaw, commercialRaw, consistencyRaw, growthPct };
   });
 
-  // Find min/max for normalization
   const minMax = (arr: number[]) => ({ min: Math.min(...arr), max: Math.max(...arr) });
   const searchMM = minMax(metrics.map(m => m.searchGrowthRaw));
   const socialMM = minMax(metrics.map(m => m.socialRaw));
@@ -65,8 +71,10 @@ export function scoreTrends(rawData: TrendRawData[]): TrendScored[] {
     const commercialNorm = normalize(m.commercialRaw, commercialMM.min, commercialMM.max);
     const consistencyNorm = normalize(m.consistencyRaw, consistencyMM.min, consistencyMM.max);
 
+    const sentimentPenalty = calcSentimentPenalty(d);
+
     const searchWeighted = Math.round(searchNorm * 0.35);
-    const socialWeighted = Math.round(socialNorm * 0.25);
+    const socialWeighted = Math.max(0, Math.round(socialNorm * 0.25) - sentimentPenalty);
     const commercialWeighted = Math.round(commercialNorm * 0.20);
     const consistencyWeighted = Math.round(consistencyNorm * 0.20);
 
@@ -83,6 +91,7 @@ export function scoreTrends(rawData: TrendRawData[]): TrendScored[] {
       growthPct: m.growthPct,
       competitionIntensity: getCompetition(d.amazon_search, maxAmazon),
       timeToMainstream: getTimeToMainstream(m.growthPct, overallScore),
+      sentimentPenalty,
       scores: {
         searchGrowth: { raw: m.searchGrowthRaw, normalized: searchNorm, weighted: searchWeighted },
         socialSignals: { raw: m.socialRaw, normalized: socialNorm, weighted: socialWeighted },
@@ -92,11 +101,14 @@ export function scoreTrends(rawData: TrendRawData[]): TrendScored[] {
     };
   });
 
-  // Sort by score descending and assign ranks
   scored.sort((a, b) => b.overallScore - a.overallScore);
   scored.forEach((s, i) => { s.rank = i + 1; });
 
   return scored;
+}
+
+export function scoreOneTrend(raw: TrendRawData): TrendScored {
+  return scoreTrends([raw])[0];
 }
 
 export function parseCSV(csvText: string): { data: TrendRawData[]; warnings: string[] } {
