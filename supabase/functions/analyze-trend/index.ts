@@ -49,7 +49,7 @@ async function fetchYouTubeData(keyword: string, apiKey: string): Promise<YouTub
 }
 
 async function fetchGoogleTrends(keyword: string, serpApiKey: string): Promise<GoogleTrendsResult> {
-  const url = `https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(keyword)}&data_type=TIMESERIES&date=today 6-m&api_key=${serpApiKey}`;
+  const url = `https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(keyword)}&data_type=TIMESERIES&date=${encodeURIComponent('today 6-m')}&api_key=${serpApiKey}`;
 
   const res = await fetch(url);
   if (!res.ok) {
