@@ -135,10 +135,10 @@ export default function TrendDetail() {
         <ul className="space-y-2.5 text-sm text-secondary-foreground">
           <SignalItem icon={Search} label="Google Trends search growth" value={`+${trend.growthPct}% over 3 months`} />
           <SignalItem icon={MessageSquare} label="Reddit discussion volume" value={`${trend.reddit_mentions} mentions`} />
-          <SignalItem icon={Youtube} label="YouTube content mentions" value={`${trend.youtube_mentions || 'N/A'}`} />
-          <SignalItem icon={Instagram} label="Instagram discussion volume" value={`${trend.instagram_mentions || 'N/A'}`} />
-          <SignalItem icon={ShoppingCart} label="Amazon product count" value={`${trend.amazon_product_count || 'N/A'}`} />
-          <SignalItem icon={DollarSign} label="Average price band" value={trend.avg_price_band || 'N/A'} />
+          <SignalItem icon={Youtube} label="YouTube content mentions" value={`${trend.youtube_mentions != null ? trend.youtube_mentions : 'N/A'}`} />
+          <SignalItem icon={Instagram} label="Instagram discussion volume" value={`${trend.instagram_mentions != null ? trend.instagram_mentions : 'N/A'}`} />
+          <SignalItem icon={ShoppingCart} label="Amazon product count" value={`${trend.amazon_product_count != null ? trend.amazon_product_count : 'N/A'}`} />
+          <SignalItem icon={DollarSign} label="Average price band" value={trend.avg_price_band ?? 'N/A'} />
         </ul>
       </Section>
 
